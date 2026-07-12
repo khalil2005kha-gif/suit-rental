@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة الإدارة - هاشتاق</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body class="admin-body">
+
+<!-- ═══ LOGIN OVERLAY ═══ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo"><img src="/images/logo.jpg" alt="Logo" style="height: 70px; width: 70px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; margin-bottom: 0.5rem;" /></div>
+    <h2>هاشتاق</h2>
+    <p>لوحة الإدارة</p>
+    <div class="form-group">
+      <label>كلمة المرور</label>
+      <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور" />
+    </div>
+    <button class="btn-primary" id="loginBtn" style="width:100%">دخول</button>
+    <p class="login-hint">كلمة المرور الافتراضية: <strong>admin123</strong></p>
+    <div class="login-error hidden" id="loginError">❌ كلمة المرور غير صحيحة</div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN LAYOUT ═══ -->
+<div class="admin-layout hidden" id="adminLayout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-brand">
+      <img src="/images/logo.jpg" alt="Logo" style="height: 35px; width: 35px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover; margin-left: 0.5rem;" />
+      <span>هاشتاق</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="sidebar-link active" data-tab="suits">
+        <span>👔</span> البدل
+      </a>
+      <a href="#" class="sidebar-link" data-tab="bookings">
+        <span>📋</span> الحجوزات
+      </a>
+      <a href="#" class="sidebar-link" data-tab="settings">
+        <span>⚙️</span> الإعدادات
+      </a>
+    </nav>
+    <a href="/" class="sidebar-link sidebar-exit" target="_blank">
+      <span>🌐</span> عرض الموقع
+    </a>
+    <button class="sidebar-link sidebar-exit" id="logoutBtn" style="background:none;border:none;cursor:pointer;width:100%;text-align:right;color:inherit">
+      <span>🚪</span> خروج
+    </button>
+  </aside>
+
+  <!-- Main content -->
+  <main class="admin-main">
+
+    <!-- Top bar -->
+    <div class="admin-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+      <h1 class="admin-page-title" id="pageTitle">إدارة البدل</h1>
+      <div class="topbar-actions">
+        <button class="btn-primary" id="addSuitBtn">+ إضافة بدلة</button>
+      </div>
+    </div>
+
+    <!-- ─── TAB: SUITS ─── -->
+    <div class="admin-tab active" id="tab-suits">
+      <div class="admin-stats-row">
+        <div class="admin-stat-card">
+          <span class="asc-icon">👔</span>
+          <div><span class="asc-num" id="statTotal">0</span><p>إجمالي البدل</p></div>
+        </div>
+        <div class="admin-stat-card">
+          <span class="asc-icon">✅</span>
+          <div><span class="asc-num" id="statAvail">0</span><p>متاحة</p></div>
+        </div>
+        <div class="admin-stat-card">
+          <span class="asc-icon">❌</span>
+          <div><span class="asc-num" id="statUnav">0</span><p>غير متاحة</p></div>
+        </div>
+        <div class="admin-stat-card">
+          <span class="asc-icon">📋</span>
+          <div><span class="asc-num" id="statBookings">0</span><p>طلبات</p></div>
+        </div>
+      </div>
+
+      <div class="admin-search-bar">
+        <input type="text" id="adminSearch" placeholder="ابحث في البدل..." />
+      </div>
+
+      <div class="suits-admin-grid" id="suitsAdminGrid">
+        <div class="loading-state"><div class="spinner"></div><p>جاري التحميل...</p></div>
+      </div>
+    </div>
+
+    <!-- ─── TAB: BOOKINGS ─── -->
+    <div class="admin-tab hidden" id="tab-bookings">
+      <div class="bookings-table-wrap">
+        <table class="bookings-table" id="bookingsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الاسم</th>
+              <th>الهاتف</th>
+              <th>التاريخ</th>
+              <th>الحالة</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTbody">
+            <tr><td colspan="6" style="text-align:center;padding:2rem">جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── TAB: SETTINGS ─── -->
+    <div class="admin-tab hidden" id="tab-settings">
+      <div class="settings-card">
+        <h3>إعدادات الموقع</h3>
+        <div class="form-group">
+          <label>اسم المتجر</label>
+          <input type="text" id="settingStoreName" placeholder="دار الأناقة" />
+        </div>
+        <div class="form-group">
+          <label>رقم الواتساب (بدون +)</label>
+          <input type="text" id="settingWhatsapp" placeholder="9627XXXXXXXX" />
+        </div>
+        <div class="form-group">
+          <label>العنوان</label>
+          <input type="text" id="settingAddress" placeholder="المدينة - الشارع" />
+        </div>
+        <div class="form-group">
+          <label>كلمة المرور الجديدة</label>
+          <input type="password" id="settingPassword" placeholder="اتركها فارغة للإبقاء على الحالية" />
+        </div>
+        <button class="btn-primary" id="saveSettingsBtn">💾 حفظ الإعدادات</button>
+        <div class="form-success hidden" id="settingSuccess">✅ تم الحفظ بنجاح</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══ SUIT FORM MODAL ═══ -->
+<div class="modal-overlay" id="suitModal">
+  <div class="modal-box modal-large">
+    <button class="modal-close" id="suitModalClose">✕</button>
+    <h3 id="suitModalTitle">إضافة بدلة جديدة</h3>
+    <input type="hidden" id="editSuitId" />
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>اسم البدلة *</label>
+        <input type="text" id="suitName" placeholder="مثال: بدلة كلاسيك رجالية" />
+      </div>
+      <div class="form-group">
+        <label>الفئة</label>
+        <select id="suitCategory">
+          <option value="كلاسيك">كلاسيك</option>
+          <option value="زفاف">زفاف</option>
+          <option value="سهرة">سهرة</option>
+          <option value="أعمال">أعمال</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>الوصف</label>
+      <textarea id="suitDesc" rows="2" placeholder="وصف مختصر للبدلة..."></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>السعر (₪ شيكل) *</label>
+        <input type="number" id="suitPrice" placeholder="50" min="0" />
+      </div>
+      <div class="form-group">
+        <label>الألوان (مفصولة بفاصلة)</label>
+        <input type="text" id="suitColors" placeholder="أسود, كحلي, رمادي" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>المقاسات (مفصولة بفاصلة)</label>
+        <input type="text" id="suitSizes" placeholder="S, M, L, XL, XXL" />
+      </div>
+      <div class="form-group">
+        <label>الحالة</label>
+        <select id="suitAvailable">
+          <option value="true">✅ متاحة للإيجار</option>
+          <option value="false">❌ غير متاحة</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Image upload -->
+    <div class="form-group">
+      <label>صور البدلة</label>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="imageFiles" multiple accept="image/*" hidden />
+        <div class="upload-placeholder" id="uploadPlaceholder">
+          <span>📸</span>
+          <p>اسحب الصور هنا أو <span class="upload-link">انقر للاختيار</span></p>
+          <small>JPG, PNG, WEBP — حتى 10 ميجا للصورة</small>
+        </div>
+        <div class="upload-previews" id="uploadPreviews"></div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-primary" id="saveSuitBtn">💾 حفظ البدلة</button>
+      <button class="btn-outline" id="cancelSuitBtn">إلغاء</button>
+    </div>
+    <div class="form-success hidden" id="suitSaveSuccess">✅ تم الحفظ بنجاح!</div>
+    <div class="form-error hidden" id="suitSaveError">❌ حدث خطأ، حاول مرة أخرى</div>
+  </div>
+</div>
+
+<!-- ═══ DELETE CONFIRM ═══ -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box modal-small">
+    <h3>🗑️ تأكيد الحذف</h3>
+    <p>هل أنت متأكد من حذف هذه البدلة؟ لا يمكن التراجع عن هذا الإجراء.</p>
+    <input type="hidden" id="deleteSuitId" />
+    <div class="modal-btns">
+      <button class="btn-danger" id="confirmDeleteBtn">نعم، احذف</button>
+      <button class="btn-outline" id="cancelDeleteBtn">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

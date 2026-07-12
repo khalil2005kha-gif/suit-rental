@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="logoText">دار الأناقة - تأجير البدل الرجالية الفاخرة</title>
+  <meta name="description" content="أفضل بدل رجالية فاخرة للإيجار - بدل زفاف، مناسبات، سهرات. احجز الآن بأفضل الأسعار." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <a class="nav-logo" href="/">
+      <img src="/images/logo.jpg" alt="Logo" style="height: 40px; width: 40px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover;" />
+      <span class="logo-text" data-i18n="logoText" style="margin-right: 0.5rem; margin-left: 0.5rem;">هاشتاق</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#hero" data-i18n="navHome">الرئيسية</a></li>
+      <li><a href="#suits" data-i18n="navSuits">البدل</a></li>
+      <li><a href="#how" data-i18n="navHow">كيف نعمل</a></li>
+      <li><a href="#contact" data-i18n="navContact">تواصل</a></li>
+    </ul>
+    
+    <div class="nav-actions" style="display: flex; align-items: center; gap: 1rem;">
+      <button id="langToggle" class="btn-lang" style="background: transparent; color: var(--gold); border: 1.5px solid var(--border); padding: 0.4rem 1rem; border-radius: 50px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: var(--transition);">English</button>
+      <a href="/admin.html" class="btn-admin" data-i18n="adminBtn">لوحة الإدارة</a>
+    </div>
+
+    <button class="hamburger" id="hamburger" aria-label="القائمة">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="hero">
+  <div class="hero-bg-overlay"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <p class="hero-tag" data-i18n="heroTag">✨ الأناقة في كل مناسبة</p>
+    <h1 class="hero-title" data-i18n="heroTitleHtml">بدل فاخرة<br/><span class="gradient-text">لكل مناسبة</span></h1>
+    <p class="hero-subtitle" data-i18n="heroSubtitle">أجّر أرقى البدل الرجالية بأسعار مناسبة. زفاف، خطوبة، مؤتمرات، وكل المناسبات الخاصة.</p>
+    <div class="hero-btns">
+      <a href="#suits" class="btn-primary" data-i18n="btnBrowse">استعرض البدل</a>
+      <a href="#contact" class="btn-outline" data-i18n="btnBookNow">احجز الآن</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num" data-target="200">0</span>+<p data-i18n="statSuits">بدلة متاحة</p></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-num" data-target="1500">0</span>+<p data-i18n="statClients">عميل سعيد</p></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-num" data-target="10">0</span>+<p data-i18n="statExperience">سنوات خبرة</p></div>
+    </div>
+  </div>
+  <div class="hero-scroll-indicator">
+    <div class="scroll-dot"></div>
+  </div>
+</section>
+
+<!-- ═══════════ FILTER BAR ═══════════ -->
+<section class="filter-section" id="suits">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-tag" data-i18n="sectionTagSuits">مجموعتنا</p>
+      <h2 class="section-title" data-i18n="sectionTitleSuits">اختر بدلتك المثالية</h2>
+      <p class="section-sub" data-i18n="sectionSubSuits">كولكشن فاخر من أرقى البدل لكل مناسباتك</p>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all" data-i18n="filterAll">الكل</button>
+      <button class="filter-btn" data-filter="كلاسيك" data-i18n="filterClassic">كلاسيك</button>
+      <button class="filter-btn" data-filter="زفاف" data-i18n="filterWedding">زفاف</button>
+      <button class="filter-btn" data-filter="سهرة" data-i18n="filterEvening">سهرة</button>
+      <button class="filter-btn" data-filter="أعمال" data-i18n="filterBusiness">أعمال</button>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="ابحث عن بدلة..." data-i18n="searchPlaceholder" />
+      <span class="search-icon">🔍</span>
+    </div>
+
+    <!-- Grid -->
+    <div class="suits-grid" id="suitsGrid">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p data-i18n="suitsLoading">جاري التحميل...</p>
+      </div>
+    </div>
+
+    <div class="empty-state hidden" id="emptyState">
+      <div class="empty-icon">👔</div>
+      <h3 data-i18n="suitsEmptyTitle">لا توجد بدل حالياً</h3>
+      <p data-i18n="suitsEmptyText">سيتم إضافة البدل قريباً. تواصل معنا للاستفسار.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-tag" data-i18n="sectionTagHow">بكل سهولة</p>
+      <h2 class="section-title" data-i18n="sectionTitleHow">كيف تأجر بدلتك؟</h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">01</div>
+        <div class="step-icon">👁️</div>
+        <h3 data-i18n="step1Title">استعرض المجموعة</h3>
+        <p data-i18n="step1Text">تصفح مجموعتنا الواسعة من البدل الفاخرة واختر ما يناسبك</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">02</div>
+        <div class="step-icon">📞</div>
+        <h3 data-i18n="step2Title">تواصل معنا</h3>
+        <p data-i18n="step2Text">أرسل لنا رسالة أو اتصل بنا لتأكيد التوفر وتحديد الموعد</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">03</div>
+        <div class="step-icon">📏</div>
+        <h3 data-i18n="step3Title">القياس والتعديل</h3>
+        <p data-i18n="step3Text">نأخذ مقاساتك ونعدّل البدلة لتناسبك بشكل مثالي</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">04</div>
+        <div class="step-icon">🎉</div>
+        <h3 data-i18n="step4Title">استمتع بمناسبتك</h3>
+        <p data-i18n="step4Text">احضر مناسبتك بأبهى حلة وعد البدلة بعد الانتهاء</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CONTACT ═══════════ -->
+<section class="contact-section" id="contact">
+  <div class="container">
+    <div class="contact-grid">
+      <div class="contact-info">
+        <p class="section-tag" data-i18n="contactTag">تواصل معنا</p>
+        <h2 class="section-title" style="text-align:right;" data-i18n="contactTitle">احجز بدلتك الآن</h2>
+        <p class="contact-desc" data-i18n="contactDesc">نحن هنا لمساعدتك في اختيار البدلة المثالية لمناسبتك. تواصل معنا الآن!</p>
+        <div class="contact-items">
+          <div class="contact-item">
+            <span class="ci-icon">📍</span>
+            <div>
+              <strong data-i18n="contactAddressLabel">الموقع</strong>
+              <p id="contactAddress">يمكن تغيير هذا النص من لوحة الإدارة</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="ci-icon">📱</span>
+            <div>
+              <strong data-i18n="contactWhatsappLabel">واتساب</strong>
+              <p id="contactWhatsapp">+970 593425031</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="ci-icon">🕐</span>
+            <div>
+              <strong data-i18n="contactHoursLabel">أوقات العمل</strong>
+              <p data-i18n="contactHoursVal">السبت - الخميس: 9 صباحاً - 10 مساءً</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form-wrap">
+        <form class="contact-form" id="contactForm">
+          <h3 data-i18n="bookingFormTitle">أرسل طلب حجز</h3>
+          <div class="form-group">
+            <label for="custName" data-i18n="labelFullName">الاسم الكامل *</label>
+            <input type="text" id="custName" placeholder="اكتب اسمك" data-i18n="placeholderName" required />
+          </div>
+          <div class="form-group">
+            <label for="custPhone" data-i18n="labelPhone">رقم الهاتف *</label>
+            <input type="tel" id="custPhone" placeholder="059XXXXXXXX" data-i18n="placeholderPhone" required />
+          </div>
+          <div class="form-group">
+            <label for="custDate" data-i18n="labelEventDate">تاريخ المناسبة</label>
+            <input type="date" id="custDate" />
+          </div>
+          <div class="form-group">
+            <label for="custNotes" data-i18n="labelExtraNotes">تفاصيل إضافية</label>
+            <textarea id="custNotes" rows="3" placeholder="نوع المناسبة، المقاس المطلوب، أي تفاصيل أخرى..." data-i18n="placeholderNotes"></textarea>
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%" id="submitBtn" data-i18n="btnSubmitOrder">
+            إرسال الطلب 🚀
+          </button>
+          <div class="form-success hidden" id="formSuccess" data-i18n="bookingSuccess">
+            ✅ تم إرسال طلبك بنجاح! سنتواصل معك قريباً.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <img src="/images/logo.jpg" alt="Logo" style="height: 35px; width: 35px; border-radius: 50%; border: 1px solid var(--gold); object-fit: cover;" />
+          <span class="logo-text" data-i18n="logoText">هاشتاق</span>
+        </div>
+        <p data-i18n="footerTagline">أرقى بدل رجالية لكل مناسبة</p>
+      </div>
+      <div class="footer-links-group">
+        <h4 data-i18n="footerQuickLinks">روابط سريعة</h4>
+        <ul>
+          <li><a href="#hero" data-i18n="navHome">الرئيسية</a></li>
+          <li><a href="#suits" data-i18n="navSuits">البدل</a></li>
+          <li><a href="#how" data-i18n="navHow">كيف نعمل</a></li>
+          <li><a href="#contact" data-i18n="navContact">تواصل</a></li>
+        </ul>
+      </div>
+      <div class="footer-links-group">
+        <h4 data-i18n="footerServices">خدماتنا</h4>
+        <ul>
+          <li><a href="#" data-i18n="footerWeddingSuit">بدل زفاف</a></li>
+          <li><a href="#" data-i18n="footerEveningSuit">بدل سهرة</a></li>
+          <li><a href="#" data-i18n="footerClassic">بدل كلاسيك</a></li>
+          <li><a href="#" data-i18n="footerBusinessSuit">بدل أعمال</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p data-i18n="footerRights">© 2025 دار الأناقة. جميع الحقوق محفوظة.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════ LIGHTBOX ═══════════ -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose">✕</button>
+  <button class="lb-prev" id="lbPrev">❮</button>
+  <button class="lb-next" id="lbNext">❯</button>
+  <div class="lb-content">
+    <img id="lbImg" src="" alt="" />
+    <div class="lb-caption" id="lbCaption"></div>
+  </div>
+</div>
+
+<!-- ═══════════ BOOKING MODAL ═══════════ -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">✕</button>
+    <h3 id="modalSuitName" data-i18n="modalBookSuit">احجز البدلة</h3>
+    <input type="hidden" id="modalSuitId" />
+    <div class="form-group">
+      <label data-i18n="labelFullName">اسمك *</label>
+      <input type="text" id="modalName" placeholder="الاسم الكامل" data-i18n="placeholderName" />
+    </div>
+    <div class="form-group">
+      <label data-i18n="labelPhone">رقم الهاتف *</label>
+      <input type="tel" id="modalPhone" placeholder="059XXXXXXXX" data-i18n="placeholderPhone" />
+    </div>
+    <div class="form-group">
+      <label data-i18n="labelEventDate">تاريخ المناسبة</label>
+      <input type="date" id="modalDate" />
+    </div>
+    <div class="form-group">
+      <label data-i18n="labelExtraNotes">ملاحظات</label>
+      <textarea id="modalNotes" rows="2" placeholder="أي تفاصيل إضافية..." data-i18n="placeholderNotes"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" id="modalSubmit" data-i18n="modalSubmitBtn">تأكيد الحجز</button>
+      <a href="#" class="btn-whatsapp" id="modalWhatsapp" target="_blank">📲 واتساب</a>
+    </div>
+    <div class="form-success hidden" id="modalSuccess" data-i18n="modalSuccessText">✅ تم إرسال طلبك!</div>
+  </div>
+</div>
+
+<div class="whatsapp-fab" id="whatsappFab" title="تواصل عبر واتساب">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+</div>
+
+<script src="/js/main.js"></script>
+</body>
+</html>
