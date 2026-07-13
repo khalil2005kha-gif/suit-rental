@@ -1,57 +1,99 @@
+require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
+const cloudinary = require('cloudinary').v2;
+
+// Models
+const Suit = require('./models/Suit');
+const Booking = require('./models/Booking');
+const Settings = require('./models/Settings');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ─── MongoDB Connection ───────────────────────────────────────
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/suit-rental';
+
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('🍃 متصل بقاعدة بيانات MongoDB السحابية بنجاح');
+    seedDefaultSettings();
+  })
+  .catch(err => console.error('❌ فشل الاتصال بـ MongoDB:', err));
+
+// ─── Cloudinary Config ────────────────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Helper: Upload file buffer to Cloudinary
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'suit-rental' },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    uploadStream.end(fileBuffer);
+  });
+};
+
+// Helper: Delete file from Cloudinary by URL
+const deleteFromCloudinary = (url) => {
+  try {
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
+    if (uploadIndex === -1) return;
+    
+    // Extract public ID including folders but excluding file extension
+    const publicIdWithExtension = parts.slice(uploadIndex + 2).join('/');
+    const publicId = publicIdWithExtension.substring(0, publicIdWithExtension.lastIndexOf('.'));
+    
+    cloudinary.uploader.destroy(publicId, (err, result) => {
+      if (err) console.error('Cloudinary delete error:', err);
+    });
+  } catch (err) {
+    console.error('Cloudinary delete parsing error:', err);
+  }
+};
+
+// ─── Seed default settings if empty ───────────────────────────
+async function seedDefaultSettings() {
+  try {
+    const count = await Settings.countDocuments();
+    if (count === 0) {
+      const defaultSettings = new Settings({
+        storeName: "هاشتاق",
+        whatsapp: "972597518416",
+        address: "فلسطين",
+        password: "123456789"
+      });
+      await defaultSettings.save();
+      console.log('🌱 تم تهيئة الإعدادات الافتراضية بنجاح');
+    }
+  } catch (err) {
+    console.error('❌ خطأ في تهيئة الإعدادات:', err);
+  }
+}
 
 // ─── Middleware ───────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ─── Ensure directories exist ─────────────────────────────────
-const uploadsDir = path.join(__dirname, 'uploads');
-const dbPath = path.join(__dirname, 'database.json');
+// Serve static sites
+app.use(express.static(path.join(__dirname, 'client')));
+app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-// ─── Database helpers ─────────────────────────────────────────
-function readDB() {
-  if (!fs.existsSync(dbPath)) {
-    const initial = {
-      suits: [],
-      bookings: [],
-      settings: {
-        storeName: "هاشتاق",
-        whatsapp: "972597518416",
-        address: "فلسطين"
-      }
-    };
-    fs.writeFileSync(dbPath, JSON.stringify(initial, null, 2), 'utf-8');
-    return initial;
-  }
-  return JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
-}
-
-function writeDB(data) {
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-// ─── Multer Config ─────────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${uuidv4()}${ext}`);
-  },
-});
-
+// ─── Multer Config (Memory Storage) ───────────────────────────
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
@@ -68,30 +110,39 @@ const upload = multer({
 // ═══════════════════════════════════════════════════════════════
 
 // GET all suits
-app.get('/api/suits', (req, res) => {
-  const db = readDB();
-  res.json({ success: true, suits: db.suits });
+app.get('/api/suits', async (req, res) => {
+  try {
+    const suits = await Suit.find().sort({ createdAt: -1 });
+    res.json({ success: true, suits });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // GET single suit
-app.get('/api/suits/:id', (req, res) => {
-  const db = readDB();
-  const suit = db.suits.find(s => s.id === req.params.id);
-  if (!suit) return res.status(404).json({ success: false, message: 'البدلة غير موجودة' });
-  res.json({ success: true, suit });
+app.get('/api/suits/:id', async (req, res) => {
+  try {
+    const suit = await Suit.findById(req.params.id);
+    if (!suit) return res.status(404).json({ success: false, message: 'البدلة غير موجودة' });
+    res.json({ success: true, suit });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // POST add suit (with images)
-app.post('/api/suits', upload.array('images', 10), (req, res) => {
+app.post('/api/suits', upload.array('images', 10), async (req, res) => {
   try {
     const { name, description, price, sizes, colors, category, available } = req.body;
     if (!name || !price) {
       return res.status(400).json({ success: false, message: 'الاسم والسعر مطلوبان' });
     }
 
-    const images = (req.files || []).map(f => `/uploads/${f.filename}`);
-    const newSuit = {
-      id: uuidv4(),
+    // Upload files to Cloudinary
+    const uploadPromises = (req.files || []).map(f => uploadToCloudinary(f.buffer));
+    const images = await Promise.all(uploadPromises);
+
+    const newSuit = new Suit({
       name,
       description: description || '',
       price: parseFloat(price),
@@ -100,13 +151,9 @@ app.post('/api/suits', upload.array('images', 10), (req, res) => {
       category: category || 'كلاسيك',
       available: available !== 'false',
       images,
-      createdAt: new Date().toISOString(),
-    };
+    });
 
-    const db = readDB();
-    db.suits.unshift(newSuit);
-    writeDB(db);
-
+    await newSuit.save();
     res.json({ success: true, suit: newSuit });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -114,17 +161,16 @@ app.post('/api/suits', upload.array('images', 10), (req, res) => {
 });
 
 // PUT update suit
-app.put('/api/suits/:id', upload.array('images', 10), (req, res) => {
+app.put('/api/suits/:id', upload.array('images', 10), async (req, res) => {
   try {
-    const db = readDB();
-    const idx = db.suits.findIndex(s => s.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ success: false, message: 'البدلة غير موجودة' });
+    const suit = await Suit.findById(req.params.id);
+    if (!suit) return res.status(404).json({ success: false, message: 'البدلة غير موجودة' });
 
     const { name, description, price, sizes, colors, category, available, keepImages } = req.body;
-    const existing = db.suits[idx];
 
-    // New uploaded images
-    const newImages = (req.files || []).map(f => `/uploads/${f.filename}`);
+    // Upload new files
+    const uploadPromises = (req.files || []).map(f => uploadToCloudinary(f.buffer));
+    const newImages = await Promise.all(uploadPromises);
 
     // Keep old images if requested
     let finalImages = [];
@@ -132,46 +178,38 @@ app.put('/api/suits/:id', upload.array('images', 10), (req, res) => {
       const kept = Array.isArray(keepImages) ? keepImages : [keepImages];
       finalImages = [...kept, ...newImages];
     } else {
-      finalImages = newImages.length > 0 ? newImages : existing.images;
+      finalImages = newImages.length > 0 ? newImages : suit.images;
     }
 
-    db.suits[idx] = {
-      ...existing,
-      name: name || existing.name,
-      description: description !== undefined ? description : existing.description,
-      price: price ? parseFloat(price) : existing.price,
-      sizes: sizes ? (Array.isArray(sizes) ? sizes : sizes.split(',').map(s => s.trim())) : existing.sizes,
-      colors: colors ? (Array.isArray(colors) ? colors : colors.split(',').map(c => c.trim())) : existing.colors,
-      category: category || existing.category,
-      available: available !== undefined ? available !== 'false' : existing.available,
-      images: finalImages,
-      updatedAt: new Date().toISOString(),
-    };
+    suit.name = name || suit.name;
+    suit.description = description !== undefined ? description : suit.description;
+    suit.price = price ? parseFloat(price) : suit.price;
+    suit.sizes = sizes ? (Array.isArray(sizes) ? sizes : sizes.split(',').map(s => s.trim())) : suit.sizes;
+    suit.colors = colors ? (Array.isArray(colors) ? colors : colors.split(',').map(c => c.trim())) : suit.colors;
+    suit.category = category || suit.category;
+    suit.available = available !== undefined ? available !== 'false' : suit.available;
+    suit.images = finalImages;
+    suit.updatedAt = new Date();
 
-    writeDB(db);
-    res.json({ success: true, suit: db.suits[idx] });
+    await suit.save();
+    res.json({ success: true, suit });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
 // DELETE suit
-app.delete('/api/suits/:id', (req, res) => {
+app.delete('/api/suits/:id', async (req, res) => {
   try {
-    const db = readDB();
-    const idx = db.suits.findIndex(s => s.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ success: false, message: 'البدلة غير موجودة' });
+    const suit = await Suit.findById(req.params.id);
+    if (!suit) return res.status(404).json({ success: false, message: 'البدلة غير موجودة' });
 
-    // Delete image files
-    const suit = db.suits[idx];
-    suit.images.forEach(imgPath => {
-      const fullPath = path.join(__dirname, imgPath);
-      if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-    });
+    // Delete image files from Cloudinary
+    if (suit.images && suit.images.length > 0) {
+      suit.images.forEach(url => deleteFromCloudinary(url));
+    }
 
-    db.suits.splice(idx, 1);
-    writeDB(db);
-
+    await Suit.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'تم الحذف بنجاح' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -183,28 +221,23 @@ app.delete('/api/suits/:id', (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 
 // POST new booking request
-app.post('/api/bookings', (req, res) => {
+app.post('/api/bookings', async (req, res) => {
   try {
     const { suitId, customerName, phone, date, notes } = req.body;
     if (!customerName || !phone) {
       return res.status(400).json({ success: false, message: 'الاسم ورقم الهاتف مطلوبان' });
     }
 
-    const db = readDB();
-    const booking = {
-      id: uuidv4(),
+    const booking = new Booking({
       suitId: suitId || null,
       customerName,
       phone,
       date: date || null,
       notes: notes || '',
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
+      status: 'pending'
+    });
 
-    db.bookings.unshift(booking);
-    writeDB(db);
-
+    await booking.save();
     res.json({ success: true, booking });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -212,66 +245,94 @@ app.post('/api/bookings', (req, res) => {
 });
 
 // GET all bookings (admin)
-app.get('/api/bookings', (req, res) => {
-  const db = readDB();
-  res.json({ success: true, bookings: db.bookings });
+app.get('/api/bookings', async (req, res) => {
+  try {
+    const bookings = await Booking.find().sort({ createdAt: -1 });
+    res.json({ success: true, bookings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // PUT update booking status
-app.put('/api/bookings/:id', (req, res) => {
+app.put('/api/bookings/:id', async (req, res) => {
   try {
-    const db = readDB();
-    const idx = db.bookings.findIndex(b => b.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ success: false, message: 'الحجز غير موجود' });
-    db.bookings[idx] = { ...db.bookings[idx], ...req.body, updatedAt: new Date().toISOString() };
-    writeDB(db);
-    res.json({ success: true, booking: db.bookings[idx] });
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ success: false, message: 'الحجز غير موجود' });
+
+    Object.assign(booking, req.body);
+    booking.updatedAt = new Date();
+    
+    await booking.save();
+    res.json({ success: true, booking });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
 // DELETE booking
-app.delete('/api/bookings/:id', (req, res) => {
+app.delete('/api/bookings/:id', async (req, res) => {
   try {
-    const db = readDB();
-    const idx = db.bookings.findIndex(b => b.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ success: false, message: 'الحجز غير موجود' });
-    db.bookings.splice(idx, 1);
-    writeDB(db);
+    const booking = await Booking.findByIdAndDelete(req.params.id);
+    if (!booking) return res.status(404).json({ success: false, message: 'الحجز غير موجود' });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// ─── Upload standalone image ───────────────────────────────────
-app.post('/api/upload', upload.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ success: false, message: 'لا يوجد ملف' });
-  res.json({ success: true, url: `/uploads/${req.file.filename}` });
+// ─── Upload standalone image (Cloudinary) ──────────────────────
+app.post('/api/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'لا يوجد ملف' });
+    const url = await uploadToCloudinary(req.file.buffer);
+    res.json({ success: true, url });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // ─── Settings API ──────────────────────────────────────────────
-app.get('/api/settings', (req, res) => {
-  const db = readDB();
-  res.json({ success: true, settings: db.settings || {} });
+app.get('/api/settings', async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings();
+      await settings.save();
+    }
+    res.json({ success: true, settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-app.put('/api/settings', (req, res) => {
-  const db = readDB();
-  db.settings = { ...(db.settings || {}), ...req.body };
-  writeDB(db);
-  res.json({ success: true, settings: db.settings });
+app.put('/api/settings', async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings(req.body);
+    } else {
+      Object.assign(settings, req.body);
+    }
+    await settings.save();
+    res.json({ success: true, settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // ─── Fallback to index ────────────────────────────────────────
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin', 'index.html'));
+});
+
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'client', 'index.html'));
 });
 
 // ─── Start server ─────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n🎩 هاشتاق - سيرفر يعمل على:`);
   console.log(`   http://localhost:${PORT}       ← الصفحة الرئيسية`);
-  console.log(`   http://localhost:${PORT}/admin  ← لوحة الإدارة\n`);
+  console.log(`   http://localhost:${PORT}/admin/ ← لوحة الإدارة\n`);
 });
