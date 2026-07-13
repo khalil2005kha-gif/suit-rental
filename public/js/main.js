@@ -10,7 +10,7 @@ let filteredSuits = [];
 let currentFilter = 'all';
 let lightboxImages = [];
 let lightboxIdx = 0;
-let whatsappNumber = '970593425031'; // default fallback
+let whatsappNumber = '972597518416'; // default fallback
 let currentLanguage = 'ar';
 
 // ─── Translations Dictionary ──────────────────────────────

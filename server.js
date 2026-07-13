@@ -29,7 +29,7 @@ function readDB() {
       bookings: [],
       settings: {
         storeName: "هاشتاق",
-        whatsapp: "970593425031",
+        whatsapp: "972597518416",
         address: "فلسطين"
       }
     };
