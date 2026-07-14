@@ -224,3 +224,27 @@
   .suits-admin-grid { grid-template-columns: 1fr; }
   .modal-btns { flex-direction: column; }
 }
+
+/* ─── Settings extras ────────────────────────────────────── */
+.settings-divider {
+  display: flex; align-items: center; gap: 1rem;
+  margin: 1.5rem 0 .75rem;
+  color: var(--gold); font-weight: 700; font-size: .9rem;
+}
+.settings-divider::before, .settings-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.settings-hint {
+  font-size: .82rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.6;
+}
+.cloudinary-status {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem 1rem; border-radius: var(--radius-sm);
+  font-size: .88rem; font-weight: 600; margin-bottom: 1rem;
+}
+.cloudinary-status.status-ok {
+  background: rgba(46,196,182,.12); border: 1px solid rgba(46,196,182,.3); color: #2ec4b6;
+}
+.cloudinary-status.status-missing {
+  background: rgba(255,184,0,.1); border: 1px solid rgba(255,184,0,.3); color: #f5a623;
+}

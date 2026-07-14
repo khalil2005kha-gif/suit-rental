@@ -507,6 +507,25 @@ async function loadSettingsAdmin() {
     if (s.storeName) document.getElementById('settingStoreName').value = s.storeName;
     if (s.whatsapp) document.getElementById('settingWhatsapp').value = s.whatsapp;
     if (s.address) document.getElementById('settingAddress').value = s.address;
+    
+    // Cloudinary fields
+    if (s.cloudinary_cloud_name) document.getElementById('settingCloudName').value = s.cloudinary_cloud_name;
+    if (s.cloudinary_api_key) document.getElementById('settingApiKey').value = s.cloudinary_api_key;
+    if (s.cloudinary_api_secret) document.getElementById('settingApiSecret').value = s.cloudinary_api_secret;
+    
+    // Show Cloudinary status
+    const statusEl = document.getElementById('cloudinaryStatus');
+    if (statusEl) {
+      const hasCloudinary = s.cloudinary_cloud_name && 
+                            !s.cloudinary_cloud_name.startsWith('YOUR_') &&
+                            s.cloudinary_api_key && 
+                            s.cloudinary_api_secret;
+      statusEl.style.display = 'flex';
+      statusEl.className = `cloudinary-status ${hasCloudinary ? 'status-ok' : 'status-missing'}`;
+      statusEl.innerHTML = hasCloudinary 
+        ? '✅ Cloudinary مفعّل - ستظهر صور البدل بشكل صحيح'
+        : '⚠️ Cloudinary غير مفعّل - لن تظهر الصور للزبائن. أدخل البيانات أدناه';
+    }
   } catch (_) {}
 }
 
@@ -519,6 +538,14 @@ document.getElementById('saveSettingsBtn')?.addEventListener('click', async () =
   const pw = document.getElementById('settingPassword').value.trim();
   if (pw) body.password = pw;
 
+  // Cloudinary settings
+  const cloudName = document.getElementById('settingCloudName').value.trim();
+  const apiKey = document.getElementById('settingApiKey').value.trim();
+  const apiSecret = document.getElementById('settingApiSecret').value.trim();
+  if (cloudName) body.cloudinary_cloud_name = cloudName;
+  if (apiKey) body.cloudinary_api_key = apiKey;
+  if (apiSecret) body.cloudinary_api_secret = apiSecret;
+
   try {
     const res = await apiFetch('/api/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
@@ -528,6 +555,8 @@ document.getElementById('saveSettingsBtn')?.addEventListener('click', async () =
     if (data.success) {
       showMsg('settingSuccess', '✅ تم حفظ الإعدادات');
       document.getElementById('settingPassword').value = '';
+      // Reload settings to refresh status
+      setTimeout(loadSettingsAdmin, 500);
     }
   } catch (_) { alert('حدث خطأ'); }
 });

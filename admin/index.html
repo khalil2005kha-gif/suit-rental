@@ -138,6 +138,26 @@
           <label>كلمة المرور الجديدة</label>
           <input type="password" id="settingPassword" placeholder="اتركها فارغة للإبقاء على الحالية" />
         </div>
+
+        <div class="settings-divider">
+          <span>☁️ إعدادات Cloudinary (لرفع الصور)</span>
+        </div>
+        <p class="settings-hint">هذه الإعدادات ضرورية لعرض صور البدل. احصل عليها مجاناً من <a href="https://cloudinary.com" target="_blank" style="color:var(--gold)">cloudinary.com</a></p>
+
+        <div class="form-group">
+          <label>Cloud Name</label>
+          <input type="text" id="settingCloudName" placeholder="مثال: my-cloud" />
+        </div>
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="text" id="settingApiKey" placeholder="123456789012345" />
+        </div>
+        <div class="form-group">
+          <label>API Secret</label>
+          <input type="password" id="settingApiSecret" placeholder="أدخل الـ API Secret" />
+        </div>
+        <div class="cloudinary-status" id="cloudinaryStatus" style="display:none"></div>
+
         <button class="btn-primary" id="saveSettingsBtn">💾 حفظ الإعدادات</button>
         <div class="form-success hidden" id="settingSuccess">✅ تم الحفظ بنجاح</div>
       </div>
