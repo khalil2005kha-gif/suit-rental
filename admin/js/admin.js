@@ -2,7 +2,7 @@
    admin.js — Admin Panel Logic
    ═══════════════════════════════════════════════════════════ */
 
-const API = 'https://script.google.com/macros/s/AKfycbwrWPUU5xH4Y1HXn1-d3YzXObn1FTCL4w22WIF7YKo8Kw1KSCKu82EBsIBlRsSLBTlH/exec';
+const API = 'https://script.google.com/macros/s/AKfycby8ciVgTQ7PccMz8ZeGlMNXkzWHs2TZb2ApfQt53t15-s8t9nNn43OfkPtWc5JAfzCP/exec';
 const ADMIN_PASSWORD_KEY = 'suit_admin_pass';
 let currentSuits = [];
 let editingId = null;

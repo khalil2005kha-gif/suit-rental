@@ -2,7 +2,7 @@
    main.js — Suit Rental Landing Page Logic (Arabic/English)
    ═══════════════════════════════════════════════════════════ */
 
-const API = 'https://script.google.com/macros/s/AKfycbwrWPUU5xH4Y1HXn1-d3YzXObn1FTCL4w22WIF7YKo8Kw1KSCKu82EBsIBlRsSLBTlH/exec';
+const API = 'https://script.google.com/macros/s/AKfycby8ciVgTQ7PccMz8ZeGlMNXkzWHs2TZb2ApfQt53t15-s8t9nNn43OfkPtWc5JAfzCP/exec';
 
 // Helper for API fetch supporting Node.js or Google Apps Script Web App
 async function apiFetch(path, options = {}) {
