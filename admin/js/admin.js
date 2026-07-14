@@ -117,7 +117,7 @@ async function doLogin() {
   try {
     const res = await apiFetch('/api/settings');
     const data = await res.json();
-    const correctPw = data.settings?.password || 'admin123';
+    const correctPw = String(data.settings?.password || 'admin123');
     if (pw === correctPw) {
       sessionStorage.setItem(ADMIN_PASSWORD_KEY, pw);
       showAdmin();
@@ -125,8 +125,8 @@ async function doLogin() {
       err.classList.remove('hidden');
     }
   } catch (_) {
-    // offline fallback
-    if (pw === 'admin123') { sessionStorage.setItem(ADMIN_PASSWORD_KEY, pw); showAdmin(); }
+    // offline fallback — try both default passwords
+    if (pw === 'admin123' || pw === '123456789') { sessionStorage.setItem(ADMIN_PASSWORD_KEY, pw); showAdmin(); }
     else { err.classList.remove('hidden'); }
   }
 }
