@@ -129,17 +129,15 @@ function createSuit(data) {
   var sheet = _getOrCreateSuitsSheet(ss);
   var id = Utilities.getUuid();
   
-  // رفع الصور إلى Cloudinary إذا تم إرسالها بصيغة Base64
+  // رفع الصور إلى Google Drive
   var imageUrls = [];
-  var settings = getSettings();
   if (data.images && data.images.length > 0) {
     for (var i = 0; i < data.images.length; i++) {
       var img = data.images[i];
       try {
-        var url = uploadToCloudinary(img.base64, img.name, img.type, settings);
+        var url = uploadToGoogleDrive(img.base64, img.name, img.type);
         imageUrls.push(url);
       } catch (e) {
-        // إذا فشل الرفع، سنستمر مع تسجيل الخطأ
         Logger.log("فشل الرفع لـ " + img.name + ": " + e.toString());
       }
     }
@@ -177,14 +175,13 @@ function updateSuit(id, data) {
     return { success: false, message: "البدلة غير موجودة" };
   }
   
-  // رفع الصور الجديدة إلى Cloudinary
+  // رفع الصور الجديدة إلى Google Drive
   var newUrls = [];
-  var settings = getSettings();
   if (data.images && data.images.length > 0) {
     for (var i = 0; i < data.images.length; i++) {
       var img = data.images[i];
       try {
-        var url = uploadToCloudinary(img.base64, img.name, img.type, settings);
+        var url = uploadToGoogleDrive(img.base64, img.name, img.type);
         newUrls.push(url);
       } catch (e) {
         Logger.log("فشل الرفع لـ " + img.name + ": " + e.toString());
@@ -320,6 +317,9 @@ function getSettings() {
   for (var i = 0; i < data.length; i++) {
     settings[data[i][0]] = data[i][1];
   }
+  // تحويل القيم الرقمية لنصوص لتجنب مشاكل المقارنة في JavaScript
+  if (settings.password !== undefined) settings.password = String(settings.password);
+  if (settings.whatsapp !== undefined) settings.whatsapp = String(settings.whatsapp);
   return settings;
 }
 
@@ -345,59 +345,39 @@ function updateSettings(data) {
 //  دوال الخدمات والرفع السحابي لـ Cloudinary
 // ==============================================================================
 
-function uploadToCloudinary(base64, filename, mimeType, settings) {
-  var cloudName = settings.cloudinary_cloud_name;
-  var apiKey = settings.cloudinary_api_key;
-  var apiSecret = settings.cloudinary_api_secret;
+// ==============================================================================
+//  رفع الصور عبر Google Drive (مجاني بدون إعدادات خارجية)
+// ==============================================================================
+
+function uploadToGoogleDrive(base64, filename, mimeType) {
+  // الحصول على مجلد الصور أو إنشاؤه
+  var folder = _getOrCreateDriveFolder();
   
-  if (!cloudName || !apiKey || !apiSecret || cloudName.indexOf("YOUR_") === 0) {
-    throw new Error("إعدادات Cloudinary غير مدخلة أو غير صحيحة في جدول البيانات.");
+  // تحويل Base64 إلى Blob
+  var decoded = Utilities.base64Decode(base64);
+  var blob = Utilities.newBlob(decoded, mimeType, filename);
+  
+  // رفع الملف
+  var file = folder.createFile(blob);
+  
+  // جعل الملف عاماً (للعرض فقط)
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  
+  // إرجاع رابط مباشر للصورة
+  var fileId = file.getId();
+  return "https://lh3.googleusercontent.com/d/" + fileId;
+}
+
+function _getOrCreateDriveFolder() {
+  var folderName = "suit-rental-images";
+  var folders = DriveApp.getFoldersByName(folderName);
+  if (folders.hasNext()) {
+    return folders.next();
   }
-  
-  var timestamp = Math.floor(Date.now() / 1000).toString();
-  var folder = "suit-rental";
-  
-  var params = {
-    folder: folder,
-    timestamp: timestamp
-  };
-  
-  var keys = Object.keys(params).sort();
-  var stringToSign = keys.map(function(key) {
-    return key + "=" + params[key];
-  }).join("&") + apiSecret;
-  
-  // حساب التوقيع الرقمي (Signature) للرفع الآمن
-  var signature = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, stringToSign, Utilities.Charset.UTF_8)
-    .map(function(byte) {
-      var str = (byte & 0xFF).toString(16);
-      return str.length == 1 ? "0" + str : str;
-    }).join("");
-    
-  var url = "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload";
-  
-  var payload = {
-    file: "data:" + mimeType + ";base64," + base64,
-    api_key: apiKey,
-    timestamp: timestamp,
-    folder: folder,
-    signature: signature
-  };
-  
-  var options = {
-    method: "post",
-    payload: payload,
-    muteHttpExceptions: true
-  };
-  
-  var response = UrlFetchApp.fetch(url, options);
-  var json = JSON.parse(response.getContentText());
-  
-  if (json.error) {
-    throw new Error("فشل الرفع لـ Cloudinary: " + json.error.message);
-  }
-  
-  return json.secure_url;
+  // إنشاء مجلد جديد
+  var folder = DriveApp.createFolder(folderName);
+  folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return folder;
 }
 
 // ==============================================================================
