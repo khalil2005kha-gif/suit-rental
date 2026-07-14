@@ -209,13 +209,22 @@ const i18n = {
 // ════════════════════════════════════════════════════════════
 //  Init
 // ════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initParticles();
   initNavbar();
   initAOS();
+  
+  // Start loading settings, suits and tracking visits in parallel
+  const settingsPromise = loadSettings();
+  const suitsPromise = loadSuits();
+  const visitPromise = trackVisit();
+  
+  // Wait for all requests to finish or fail
+  await Promise.allSettled([settingsPromise, suitsPromise, visitPromise]);
+  
+  // Animate counters once data targets are set
   animateCounters();
-  loadSettings();
-  loadSuits();
+  
   initFilters();
   initSearch();
   initContactForm();
@@ -387,8 +396,42 @@ async function loadSuits() {
     const data = await res.json();
     allSuits = data.suits || [];
     applyFilter();
+    
+    // Update available suits counter target
+    const availableCount = allSuits.filter(s => s.available !== false).length;
+    const suitsStatEl = document.getElementById('statSuits');
+    if (suitsStatEl) {
+      suitsStatEl.dataset.target = availableCount;
+    }
   } catch (err) {
     grid.innerHTML = `<p style="color:#e74c3c;grid-column:1/-1;text-align:center;padding:2rem">${currentLanguage === 'ar' ? 'تعذّر الاتصال بالسيرفر. تأكد من تشغيله.' : 'Failed to connect to the server. Make sure it is running.'}</p>`;
+  }
+}
+
+// ─── Track page visit and increment happy clients ──────────
+async function trackVisit() {
+  try {
+    const res = await apiFetch('/api/visit', { method: 'POST' });
+    const data = await res.json();
+    if (data.success && data.happyClients) {
+      const clientsStatEl = document.getElementById('statClients');
+      if (clientsStatEl) {
+        clientsStatEl.dataset.target = data.happyClients;
+      }
+    }
+  } catch (err) {
+    console.error('Error tracking visit:', err);
+    // Fallback: try fetching settings to get current happyClients count
+    try {
+      const res = await apiFetch('/api/settings');
+      const data = await res.json();
+      if (data.success && data.settings?.happyClients) {
+        const clientsStatEl = document.getElementById('statClients');
+        if (clientsStatEl) {
+          clientsStatEl.dataset.target = data.settings.happyClients;
+        }
+      }
+    } catch (_) {}
   }
 }
 

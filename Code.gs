@@ -71,6 +71,12 @@ function doPost(e) {
       } else {
         result = { success: false, message: "الطريقة غير مدعومة على هذا المسار" };
       }
+    } else if (path === "api/visit") {
+      if (method === "POST") {
+        result = incrementHappyClients();
+      } else {
+        result = { success: false, message: "الطريقة غير مدعومة على هذا المسار" };
+      }
     } else {
       result = { success: false, message: "لم يتم العثور على المسار: " + path };
     }
@@ -326,6 +332,14 @@ function getSettings() {
 function updateSettings(data) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = _getOrCreateSettingsSheet(ss);
+  var existingData = sheet.getDataRange().getValues();
+  var happyClients = 1500;
+  for (var i = 0; i < existingData.length; i++) {
+    if (existingData[i][0] === 'happyClients') {
+      happyClients = Number(existingData[i][1]) || 1500;
+      break;
+    }
+  }
   
   sheet.clearContents();
   var rows = [
@@ -335,10 +349,37 @@ function updateSettings(data) {
     ['password', data.password || "123456789"],
     ['cloudinary_cloud_name', data.cloudinary_cloud_name || ""],
     ['cloudinary_api_key', data.cloudinary_api_key || ""],
-    ['cloudinary_api_secret', data.cloudinary_api_secret || ""]
+    ['cloudinary_api_secret', data.cloudinary_api_secret || ""],
+    ['happyClients', happyClients]
   ];
   sheet.getRange(1, 1, rows.length, 2).setValues(rows);
   return { success: true };
+}
+
+function incrementHappyClients() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = _getOrCreateSettingsSheet(ss);
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  var happyClients = 1500;
+  
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] === 'happyClients') {
+      rowIndex = i + 1;
+      happyClients = Number(data[i][1]) || 1500;
+      break;
+    }
+  }
+  
+  happyClients += 1;
+  
+  if (rowIndex !== -1) {
+    sheet.getRange(rowIndex, 2).setValue(happyClients);
+  } else {
+    sheet.appendRow(['happyClients', happyClients]);
+  }
+  
+  return { success: true, happyClients: happyClients };
 }
 
 // ==============================================================================
@@ -416,10 +457,11 @@ function _getOrCreateSettingsSheet(ss) {
       ['password', '123456789'],
       ['cloudinary_cloud_name', 'YOUR_CLOUD_NAME'],
       ['cloudinary_api_key', 'YOUR_API_KEY'],
-      ['cloudinary_api_secret', 'YOUR_API_SECRET']
+      ['cloudinary_api_secret', 'YOUR_API_SECRET'],
+      ['happyClients', 1500]
     ];
     sheet.getRange(1, 1, defaults.length, 2).setValues(defaults);
-    sheet.getRange("A1:B7").setFontWeight("bold");
+    sheet.getRange("A1:B8").setFontWeight("bold");
   }
   return sheet;
 }

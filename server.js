@@ -321,6 +321,23 @@ app.put('/api/settings', async (req, res) => {
   }
 });
 
+app.post('/api/visit', async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings();
+    }
+    if (settings.happyClients === undefined || settings.happyClients === null) {
+      settings.happyClients = 1500;
+    }
+    settings.happyClients += 1;
+    await settings.save();
+    res.json({ success: true, happyClients: settings.happyClients });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ─── Fallback to index ────────────────────────────────────────
 app.get('/admin/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'index.html'));
