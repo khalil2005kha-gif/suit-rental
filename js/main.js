@@ -2,7 +2,54 @@
    main.js — Suit Rental Landing Page Logic (Arabic/English)
    ═══════════════════════════════════════════════════════════ */
 
-const API = '';
+const API = 'https://script.google.com/macros/s/AKfycbwrWPUU5xH4Y1HXn1-d3YzXObn1FTCL4w22WIF7YKo8Kw1KSCKu82EBsIBlRsSLBTlH/exec';
+
+// Helper for API fetch supporting Node.js or Google Apps Script Web App
+async function apiFetch(path, options = {}) {
+  const isGAS = API.includes('script.google.com');
+  
+  let url = `${API}${path}`;
+  if (isGAS) {
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    url = `${API}?_path=${encodeURIComponent(cleanPath)}`;
+  }
+  
+  if (isGAS && options.method && options.method !== 'GET') {
+    let bodyData = {};
+    
+    if (options.body instanceof FormData) {
+      for (let [key, value] of options.body.entries()) {
+        if (key === 'images') {
+          // Handled separately
+        } else if (key === 'keepImages') {
+          if (!bodyData.keepImages) bodyData.keepImages = [];
+          bodyData.keepImages.push(value);
+        } else {
+          bodyData[key] = value;
+        }
+      }
+    } else if (typeof options.body === 'string') {
+      bodyData = JSON.parse(options.body);
+    } else {
+      bodyData = options.body || {};
+    }
+    
+    bodyData._method = options.method;
+    
+    const gasOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain'
+      },
+      body: JSON.stringify(bodyData)
+    };
+    
+    const res = await fetch(url, gasOptions);
+    return res;
+  } else {
+    return fetch(url, options);
+  }
+}
 
 // ─── State ────────────────────────────────────────────────
 let allSuits = [];
@@ -309,7 +356,7 @@ function animateCounters() {
 // ─── Load settings ─────────────────────────────────────────
 async function loadSettings() {
   try {
-    const res = await fetch(`${API}/api/settings`);
+    const res = await apiFetch('/api/settings');
     const data = await res.json();
     if (data.settings?.whatsapp) {
       whatsappNumber = data.settings.whatsapp;
@@ -336,7 +383,7 @@ async function loadSettings() {
 async function loadSuits() {
   const grid = document.getElementById('suitsGrid');
   try {
-    const res = await fetch(`${API}/api/suits`);
+    const res = await apiFetch('/api/suits');
     const data = await res.json();
     allSuits = data.suits || [];
     applyFilter();
@@ -528,7 +575,7 @@ async function submitBooking() {
   };
 
   try {
-    const res = await fetch(`${API}/api/bookings`, {
+    const res = await apiFetch('/api/bookings', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
@@ -564,7 +611,7 @@ function initContactForm() {
     };
 
     try {
-      const res = await fetch(`${API}/api/bookings`, {
+      const res = await apiFetch('/api/bookings', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });

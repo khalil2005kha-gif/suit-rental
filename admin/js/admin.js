@@ -2,12 +2,80 @@
    admin.js — Admin Panel Logic
    ═══════════════════════════════════════════════════════════ */
 
-const API = '';
+const API = 'https://script.google.com/macros/s/AKfycbwrWPUU5xH4Y1HXn1-d3YzXObn1FTCL4w22WIF7YKo8Kw1KSCKu82EBsIBlRsSLBTlH/exec';
 const ADMIN_PASSWORD_KEY = 'suit_admin_pass';
 let currentSuits = [];
 let editingId = null;
 let existingImages = []; // images kept during edit
 let newFilesMap = []; // { file, previewUrl } for new uploads
+
+// Helper for API fetch supporting Node.js or Google Apps Script Web App
+async function apiFetch(path, options = {}) {
+  const isGAS = API.includes('script.google.com');
+  
+  let url = `${API}${path}`;
+  if (isGAS) {
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    url = `${API}?_path=${encodeURIComponent(cleanPath)}`;
+  }
+  
+  if (isGAS && options.method && options.method !== 'GET') {
+    let bodyData = {};
+    
+    if (options.body instanceof FormData) {
+      for (let [key, value] of options.body.entries()) {
+        if (key === 'images') {
+          // Handled separately below
+        } else if (key === 'keepImages') {
+          if (!bodyData.keepImages) bodyData.keepImages = [];
+          bodyData.keepImages.push(value);
+        } else {
+          bodyData[key] = value;
+        }
+      }
+    } else if (typeof options.body === 'string') {
+      bodyData = JSON.parse(options.body);
+    } else {
+      bodyData = options.body || {};
+    }
+    
+    bodyData._method = options.method;
+    
+    if (options.body instanceof FormData && typeof newFilesMap !== 'undefined' && newFilesMap.length > 0) {
+      bodyData.images = [];
+      for (let f of newFilesMap) {
+        const base64 = await toBase64(f.file);
+        bodyData.images.push({
+          name: f.file.name,
+          type: f.file.type,
+          base64: base64
+        });
+      }
+    }
+    
+    const gasOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain'
+      },
+      body: JSON.stringify(bodyData)
+    };
+    
+    const res = await fetch(url, gasOptions);
+    return res;
+  } else {
+    return fetch(url, options);
+  }
+}
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = error => reject(error);
+  });
+}
 
 // ════════════════════════════════════════════════════════════
 //  Init
@@ -47,7 +115,7 @@ async function doLogin() {
   err.classList.add('hidden');
 
   try {
-    const res = await fetch(`${API}/api/settings`);
+    const res = await apiFetch('/api/settings');
     const data = await res.json();
     const correctPw = data.settings?.password || 'admin123';
     if (pw === correctPw) {
@@ -107,7 +175,7 @@ function initTabs() {
 // ════════════════════════════════════════════════════════════
 async function loadSuitsAdmin() {
   try {
-    const res = await fetch(`${API}/api/suits`);
+    const res = await apiFetch('/api/suits');
     const data = await res.json();
     currentSuits = data.suits || [];
     renderSuitsAdmin(currentSuits);
@@ -254,9 +322,9 @@ async function saveSuit() {
   newFilesMap.forEach(f => formData.append('images', f.file));
 
   try {
-    const url = editingId ? `${API}/api/suits/${editingId}` : `${API}/api/suits`;
+    const path = editingId ? `/api/suits/${editingId}` : `/api/suits`;
     const method = editingId ? 'PUT' : 'POST';
-    const res = await fetch(url, { method, body: formData });
+    const res = await apiFetch(path, { method, body: formData });
     const data = await res.json();
 
     if (data.success) {
@@ -364,7 +432,7 @@ function closeDeleteModal() {
 async function doDelete() {
   const id = document.getElementById('deleteSuitId').value;
   try {
-    const res = await fetch(`${API}/api/suits/${id}`, { method: 'DELETE' });
+    const res = await apiFetch(`/api/suits/${id}`, { method: 'DELETE' });
     const data = await res.json();
     if (data.success) { closeDeleteModal(); loadSuitsAdmin(); }
   } catch (_) { alert('حدث خطأ'); }
@@ -375,7 +443,7 @@ async function doDelete() {
 // ════════════════════════════════════════════════════════════
 async function loadBookings() {
   try {
-    const res = await fetch(`${API}/api/bookings`);
+    const res = await apiFetch('/api/bookings');
     const data = await res.json();
     renderBookings(data.bookings || []);
     document.getElementById('statBookings').textContent = (data.bookings || []).length;
@@ -412,7 +480,7 @@ function renderBookings(bookings) {
 
 async function updateBooking(id, status) {
   try {
-    await fetch(`${API}/api/bookings/${id}`, {
+    await apiFetch(`/api/bookings/${id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
@@ -423,7 +491,7 @@ async function updateBooking(id, status) {
 async function deleteBooking(id) {
   if (!confirm('حذف هذا الحجز؟')) return;
   try {
-    await fetch(`${API}/api/bookings/${id}`, { method: 'DELETE' });
+    await apiFetch(`/api/bookings/${id}`, { method: 'DELETE' });
     loadBookings();
   } catch (_) {}
 }
@@ -433,7 +501,7 @@ async function deleteBooking(id) {
 // ════════════════════════════════════════════════════════════
 async function loadSettingsAdmin() {
   try {
-    const res = await fetch(`${API}/api/settings`);
+    const res = await apiFetch('/api/settings');
     const data = await res.json();
     const s = data.settings || {};
     if (s.storeName) document.getElementById('settingStoreName').value = s.storeName;
@@ -452,7 +520,7 @@ document.getElementById('saveSettingsBtn')?.addEventListener('click', async () =
   if (pw) body.password = pw;
 
   try {
-    const res = await fetch(`${API}/api/settings`, {
+    const res = await apiFetch('/api/settings', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });

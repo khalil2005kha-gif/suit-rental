@@ -89,7 +89,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static sites
-app.use(express.static(path.join(__dirname, 'client')));
+app.use(express.static(path.join(__dirname)));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 // ─── Multer Config (Memory Storage) ───────────────────────────
@@ -327,7 +327,7 @@ app.get('/admin/*', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ─── Start server ─────────────────────────────────────────────
