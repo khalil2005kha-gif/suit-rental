@@ -423,3 +423,10 @@ function _getOrCreateSettingsSheet(ss) {
   }
   return sheet;
 }
+
+// دالة لتفعيل صلاحيات الوصول إلى Google Drive (شغّلها مرة واحدة من الأعلى بالضغط على "تشغيل")
+function testDrive() {
+  var folder = _getOrCreateDriveFolder();
+  Logger.log("تم الوصول للمجلد بنجاح: " + folder.getName());
+}
+
